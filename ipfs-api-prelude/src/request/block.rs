@@ -24,13 +24,16 @@ impl<'a> ApiRequest for BlockGet<'a> {
 #[serde(rename_all = "kebab-case")]
 pub struct BlockPut<'a> {
     #[cfg_attr(feature = "with-builder", builder(default, setter(strip_option)))]
-    pub format: Option<&'a str>,
+    pub cid_codec: Option<&'a str>,
     #[cfg_attr(feature = "with-builder", builder(default, setter(strip_option)))]
     pub mhtype: Option<&'a str>,
     #[cfg_attr(feature = "with-builder", builder(default, setter(strip_option)))]
     pub mhlen: Option<u32>,
     #[cfg_attr(feature = "with-builder", builder(default, setter(strip_option)))]
     pub pin: Option<bool>,
+    // Note: this has been deprecated in the API
+    #[cfg_attr(feature = "with-builder", builder(default, setter(strip_option)))]
+    pub format: Option<&'a str>,
 }
 
 impl<'a> ApiRequest for BlockPut<'a> {
