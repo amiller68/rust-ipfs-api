@@ -3,6 +3,9 @@
 
 # ipfs-api
 
+Rust library for connecting to the IPFS HTTP API using Hyper/Actix.
+Formally deprecated by previous maintainer and searching for a new home :heart:
+
 ### Components
 
 | Name                    | Documentation                                    | Crate                                               |
