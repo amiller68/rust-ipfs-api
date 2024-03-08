@@ -9,10 +9,14 @@
 use crate::request::ApiRequest;
 use serde::Serialize;
 
-#[derive(Serialize)]
+#[cfg_attr(feature = "with-builder", derive(TypedBuilder))]
+#[derive(Serialize, Default)]
+#[serde(rename_all = "kebab-case")]
 pub struct BlockGet<'a> {
     #[serde(rename = "arg")]
     pub hash: &'a str,
+    #[cfg_attr(feature = "with-builder", builder(default, setter(strip_option)))]
+    pub offline: Option<bool>,
 }
 
 impl<'a> ApiRequest for BlockGet<'a> {

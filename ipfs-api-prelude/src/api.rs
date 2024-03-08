@@ -372,8 +372,45 @@ pub trait IpfsApi: Backend {
     /// ```
     ///
     fn block_get(&self, hash: &str) -> BoxStream<Bytes, Self::Error> {
+        let block_get = request::BlockGet {
+            hash,
+            offline: None,
+        };
+        self.block_get_with_options(block_get)
+    }
+
+    /// Get a raw IPFS block with options.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// use futures::TryStreamExt;
+    /// use ipfs_api::{IpfsApi, IpfsClient};
+    ///
+    /// let client = IpfsClient::default();
+    /// let hash = "QmXdNSQx7nbdRvkjGCEQgVjVtVwsHvV8NmV2a8xzQVwuFA";
+    /// #[cfg(feature = "with-builder")]
+    /// let get = ipfs_api::request::BlockGet::builder()
+    ///     .hash(hash)
+    ///     .offline(true)
+    ///     .build();
+    /// #[cfg(not(feature = "with-builder"))]
+    /// let get = ipts_api::request::BlockGet {
+    ///     hash,
+    ///     offline: Some(true),
+    ///     ..Default::default()
+    /// };
+    /// let res = client.block_get_with_options(get)
+    ///     .map_ok(|chunk| chunk.to_vec())
+    ///     .try_concat();
+    /// ```
+    ///
+    fn block_get_with_options(
+        &self,
+        options: request::BlockGet<'_>,
+    ) -> BoxStream<Bytes, Self::Error> {
         impl_stream_api_response! {
-            (self, request::BlockGet { hash }, None) => request_stream_bytes
+            (self, options, None) => request_stream_bytes
         }
     }
 
