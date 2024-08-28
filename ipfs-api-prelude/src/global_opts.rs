@@ -122,6 +122,13 @@ impl<Back: Backend + Send + Sync> Backend for BackendWithGlobalOptions<Back> {
         (self as BackendWithGlobalOptions<Back>).with_credentials(username, password)
     }
 
+    fn with_bearer_auth<T>(self, _token: T) -> Self
+    where
+        T: std::fmt::Display,
+    {
+        unimplemented!()
+    }
+
     fn build_base_request<Req>(
         &self,
         req: Req,
@@ -182,6 +189,13 @@ impl<Back: Backend> Backend for BackendWithGlobalOptions<Back> {
         P: Into<String>,
     {
         (self as BackendWithGlobalOptions<Back>).with_credentials(username, password)
+    }
+
+    fn with_bearer_auth<T>(self, _token: T) -> Self
+    where
+        T: std::fmt::Display,
+    {
+        unimplemented!()
     }
 
     fn build_base_request<Req>(

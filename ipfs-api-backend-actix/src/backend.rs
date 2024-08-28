@@ -64,6 +64,19 @@ impl ActixBackend {
             credentials: Some((username.into(), password.into())),
         }
     }
+
+    pub fn with_bearer_auth<T>(self, token: T) -> Self
+    where
+        T: std::fmt::Display,
+    {
+        let client = Client::builder().bearer_auth(token).finish();
+
+        Self {
+            base: self.base,
+            client,
+            credentials: None,
+        }
+    }
 }
 
 #[async_trait(?Send)]
@@ -80,6 +93,13 @@ impl Backend for ActixBackend {
         P: Into<String>,
     {
         (self as ActixBackend).with_credentials(username, password)
+    }
+
+    fn with_bearer_auth<T>(self, token: T) -> Self
+    where
+        T: std::fmt::Display,
+    {
+        (self as ActixBackend).with_bearer_auth(token)
     }
 
     fn build_base_request<Req>(

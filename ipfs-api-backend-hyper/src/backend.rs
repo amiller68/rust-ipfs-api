@@ -131,6 +131,13 @@ where
         (self as HyperBackend<C>).with_credentials(username, password)
     }
 
+    fn with_bearer_auth<T>(self, _token: T) -> Self
+    where
+        T: std::fmt::Display,
+    {
+        unimplemented!()
+    }
+
     fn build_base_request<Req>(
         &self,
         req: Req,

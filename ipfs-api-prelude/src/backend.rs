@@ -242,4 +242,9 @@ pub trait Backend {
     where
         U: Into<String>,
         P: Into<String>;
+
+    /// Set a bearer token to use on every request from this client.
+    fn with_bearer_auth<T>(self, token: T) -> Self
+    where
+        T: std::fmt::Display;
 }
