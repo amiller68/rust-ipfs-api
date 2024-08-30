@@ -28,6 +28,8 @@ pub struct ActixBackend {
 
     /// Username and password
     credentials: Option<(String, String)>,
+
+    bearer_token: Option<String>,
 }
 
 impl Default for ActixBackend {
@@ -48,6 +50,7 @@ impl TryFromUri for ActixBackend {
             base,
             client,
             credentials: None,
+            bearer_token: None,
         }
     }
 }
@@ -62,20 +65,26 @@ impl ActixBackend {
             base: self.base,
             client: self.client,
             credentials: Some((username.into(), password.into())),
+            bearer_token: None,
         }
     }
 
-    pub fn with_bearer_auth<T>(self, token: T) -> Self
+    pub fn with_bearer_token<T>(self, token: T) -> Self
     where
-        T: std::fmt::Display,
+        T: Into<String>,
     {
-        let client = Client::builder().bearer_auth(token).finish();
-
         Self {
             base: self.base,
-            client,
+            client: self.client,
             credentials: None,
+            bearer_token: Some(token.into()),
         }
+    }
+
+    pub fn bearer_authorization(&self) -> Option<String> {
+        self.bearer_token
+            .clone()
+            .map(|token| format!("Bearer {}", token))
     }
 }
 
@@ -95,11 +104,11 @@ impl Backend for ActixBackend {
         (self as ActixBackend).with_credentials(username, password)
     }
 
-    fn with_bearer_auth<T>(self, token: T) -> Self
+    fn with_bearer_token<T>(self, token: T) -> Self
     where
-        T: std::fmt::Display,
+        T: Into<String>,
     {
-        (self as ActixBackend).with_bearer_auth(token)
+        (self as ActixBackend).with_bearer_token(token)
     }
 
     fn build_base_request<Req>(
@@ -114,6 +123,8 @@ impl Backend for ActixBackend {
         let req = self.client.request(Req::METHOD, url);
         let req = if let Some((username, password)) = &self.credentials {
             req.basic_auth(username, password)
+        } else if let Some(token) = &self.bearer_authorization() {
+            req.insert_header(("Authorization".to_string(), token.clone()))
         } else {
             req
         };

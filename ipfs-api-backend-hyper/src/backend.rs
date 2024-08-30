@@ -37,6 +37,9 @@ macro_rules! impl_default {
 
             /// Username and password
             credentials: Option<(String, String)>,
+
+            /// Bearer token
+            bearer_token: Option<String>,
         }
 
         impl Default for HyperBackend<$http_connector> {
@@ -58,6 +61,7 @@ macro_rules! impl_default {
                     base,
                     client,
                     credentials: None,
+                    bearer_token: None,
                 }
             }
         }
@@ -98,6 +102,19 @@ impl<C: Connect + Clone + Send + Sync + 'static> HyperBackend<C> {
             base: self.base,
             client: self.client,
             credentials: Some((username.into(), password.into())),
+            bearer_token: None,
+        }
+    }
+
+    pub fn with_bearer_token<T>(self, token: T) -> Self
+    where
+        T: Into<String>,
+    {
+        Self {
+            base: self.base,
+            client: self.client,
+            credentials: None,
+            bearer_token: Some(token.into()),
         }
     }
 
@@ -108,6 +125,12 @@ impl<C: Connect + Clone + Send + Sync + 'static> HyperBackend<C> {
 
             format!("Basic {}", encoded)
         })
+    }
+
+    fn bearer_authorization(&self) -> Option<String> {
+        self.bearer_token
+            .as_ref()
+            .map(|token| format!("Bearer {}", token))
     }
 }
 
@@ -131,11 +154,11 @@ where
         (self as HyperBackend<C>).with_credentials(username, password)
     }
 
-    fn with_bearer_auth<T>(self, _token: T) -> Self
+    fn with_bearer_token<T>(self, token: T) -> Self
     where
-        T: std::fmt::Display,
+        T: Into<String>,
     {
-        unimplemented!()
+        (self as HyperBackend<C>).with_bearer_token(token)
     }
 
     fn build_base_request<Req>(
@@ -152,6 +175,8 @@ where
         let builder = builder.method(Req::METHOD).uri(url);
 
         let builder = if let Some(authorization) = self.basic_authorization() {
+            builder.header(hyper::header::AUTHORIZATION, authorization)
+        } else if let Some(authorization) = self.bearer_authorization() {
             builder.header(hyper::header::AUTHORIZATION, authorization)
         } else {
             builder

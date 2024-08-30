@@ -85,6 +85,16 @@ impl<Back: Backend> BackendWithGlobalOptions<Back> {
         }
     }
 
+    fn with_bearer_token<T>(self, token: T) -> Self
+    where
+        T: Into<String>,
+    {
+        Self {
+            backend: self.backend.with_bearer_token(token),
+            options: self.options,
+        }
+    }
+
     fn combine<Req>(&self, req: Req) -> OptCombiner<Req>
     where
         Req: ApiRequest,
@@ -122,11 +132,11 @@ impl<Back: Backend + Send + Sync> Backend for BackendWithGlobalOptions<Back> {
         (self as BackendWithGlobalOptions<Back>).with_credentials(username, password)
     }
 
-    fn with_bearer_auth<T>(self, _token: T) -> Self
+    fn with_bearer_token<T>(self, token: T) -> Self
     where
-        T: std::fmt::Display,
+        T: Into<String>,
     {
-        unimplemented!()
+        (self as BackendWithGlobalOptions<Back>).with_bearer_token(token)
     }
 
     fn build_base_request<Req>(
@@ -191,11 +201,11 @@ impl<Back: Backend> Backend for BackendWithGlobalOptions<Back> {
         (self as BackendWithGlobalOptions<Back>).with_credentials(username, password)
     }
 
-    fn with_bearer_auth<T>(self, _token: T) -> Self
+    fn with_bearer_token<T>(self, token: T) -> Self
     where
-        T: std::fmt::Display,
+        T: Into<String>,
     {
-        unimplemented!()
+        (self as BackendWithGlobalOptions<Back>).with_bearer_token(token)
     }
 
     fn build_base_request<Req>(
