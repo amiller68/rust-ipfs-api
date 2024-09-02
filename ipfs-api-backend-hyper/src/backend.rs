@@ -203,17 +203,16 @@ where
         Req: ApiRequest,
     {
         let url = req.absolute_url(&self.base)?;
-
-        let builder = http::Request::builder();
-        let mut builder = builder.method(Req::METHOD);
-        
+        println!("base url: {:?}", url);
+        // append path to url if it exists
         if let Some(path) = self.path() {
             let path = format!("{}/{}", url.to_string(), path);
-            builder = builder.uri(path);
-        } else {
-            builder = builder.uri(url);
+            println!("path: {:?}", path);
         }
 
+        let builder = http::Request::builder();
+        let builder = builder.method(Req::METHOD).uri(url);
+        
         let builder = if let Some(authorization) = self.basic_authorization() {
             builder.header(hyper::header::AUTHORIZATION, authorization)
         } else if let Some(authorization) = self.bearer_authorization() {
