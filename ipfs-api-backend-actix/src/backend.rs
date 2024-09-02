@@ -5,6 +5,7 @@
 // http://opensource.org/licenses/MIT>, at your option. This file may not be
 // copied, modified, or distributed except according to those terms.
 //
+use std::path::PathBuf;
 
 use crate::error::Error;
 use async_trait::async_trait;
@@ -30,6 +31,8 @@ pub struct ActixBackend {
     credentials: Option<(String, String)>,
 
     bearer_token: Option<String>,
+
+    path: Option<PathBuf>,
 }
 
 impl Default for ActixBackend {
@@ -51,6 +54,7 @@ impl TryFromUri for ActixBackend {
             client,
             credentials: None,
             bearer_token: None,
+            path: None,
         }
     }
 }
@@ -66,6 +70,7 @@ impl ActixBackend {
             client: self.client,
             credentials: Some((username.into(), password.into())),
             bearer_token: None,
+            path: self.path,
         }
     }
 
@@ -78,6 +83,20 @@ impl ActixBackend {
             client: self.client,
             credentials: None,
             bearer_token: Some(token.into()),
+            path: self.path,
+        }
+    }
+
+    pub fn with_path<P>(self, path: P) -> Self
+    where
+        P: Into<PathBuf>,
+    {
+        Self {
+            base: self.base,
+            client: self.client,
+            credentials: self.credentials,
+            bearer_token: self.bearer_token,
+            path: Some(path.into()),
         }
     }
 
@@ -85,6 +104,12 @@ impl ActixBackend {
         self.bearer_token
             .clone()
             .map(|token| format!("Bearer {}", token))
+    }
+
+    pub fn path(&self) -> Option<String> {
+        self.path
+            .as_ref()
+            .map(|path| path.to_string_lossy().to_string())
     }
 }
 
@@ -111,6 +136,13 @@ impl Backend for ActixBackend {
         (self as ActixBackend).with_bearer_token(token)
     }
 
+    fn with_path<P>(self, path: P) -> Self
+    where
+        P: Into<PathBuf>,
+    {
+        (self as ActixBackend).with_path(path)
+    }
+
     fn build_base_request<Req>(
         &self,
         req: Req,
@@ -120,6 +152,7 @@ impl Backend for ActixBackend {
         Req: ApiRequest,
     {
         let url = req.absolute_url(&self.base)?;
+        // TODO: path setting
         let req = self.client.request(Req::METHOD, url);
         let req = if let Some((username, password)) = &self.credentials {
             req.basic_auth(username, password)

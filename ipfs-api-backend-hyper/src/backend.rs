@@ -5,6 +5,7 @@
 // http://opensource.org/licenses/MIT>, at your option. This file may not be
 // copied, modified, or distributed except according to those terms.
 //
+use std::path::PathBuf;
 
 use crate::error::Error;
 use async_trait::async_trait;
@@ -40,6 +41,9 @@ macro_rules! impl_default {
 
             /// Bearer token
             bearer_token: Option<String>,
+
+            /// Path to the IPFS API
+            path: Option<PathBuf>,
         }
 
         impl Default for HyperBackend<$http_connector> {
@@ -62,6 +66,7 @@ macro_rules! impl_default {
                     client,
                     credentials: None,
                     bearer_token: None,
+                    path: None,
                 }
             }
         }
@@ -103,6 +108,7 @@ impl<C: Connect + Clone + Send + Sync + 'static> HyperBackend<C> {
             client: self.client,
             credentials: Some((username.into(), password.into())),
             bearer_token: None,
+            path: self.path,
         }
     }
 
@@ -115,6 +121,20 @@ impl<C: Connect + Clone + Send + Sync + 'static> HyperBackend<C> {
             client: self.client,
             credentials: None,
             bearer_token: Some(token.into()),
+            path: self.path,
+        }
+    }
+
+    pub fn with_path<P>(self, path: P) -> Self
+    where
+        P: Into<PathBuf>,
+    {
+        Self {
+            base: self.base,
+            client: self.client,
+            credentials: self.credentials,
+            bearer_token: self.bearer_token,
+            path: Some(path.into()),
         }
     }
 
@@ -131,6 +151,12 @@ impl<C: Connect + Clone + Send + Sync + 'static> HyperBackend<C> {
         self.bearer_token
             .as_ref()
             .map(|token| format!("Bearer {}", token))
+    }
+
+    fn path(&self) -> Option<String> {
+        self.path
+            .as_ref()
+            .map(|path| path.to_string_lossy().to_string())
     }
 }
 
@@ -161,6 +187,13 @@ where
         (self as HyperBackend<C>).with_bearer_token(token)
     }
 
+    fn with_path<P>(self, path: P) -> Self
+    where
+        P: Into<PathBuf>,
+    {
+        (self as HyperBackend<C>).with_path(path)
+    }
+
     fn build_base_request<Req>(
         &self,
         req: Req,
@@ -172,7 +205,14 @@ where
         let url = req.absolute_url(&self.base)?;
 
         let builder = http::Request::builder();
-        let builder = builder.method(Req::METHOD).uri(url);
+        let mut builder = builder.method(Req::METHOD);
+        
+        if let Some(path) = self.path() {
+            let path = format!("{}/{}", url.to_string(), path);
+            builder = builder.uri(path);
+        } else {
+            builder = builder.uri(url);
+        }
 
         let builder = if let Some(authorization) = self.basic_authorization() {
             builder.header(hyper::header::AUTHORIZATION, authorization)

@@ -95,6 +95,16 @@ impl<Back: Backend> BackendWithGlobalOptions<Back> {
         }
     }
 
+    fn with_path<P>(self, path: P) -> Self
+    where
+        P: Into<std::path::PathBuf>,
+    {
+        Self {
+            backend: self.backend.with_path(path),
+            options: self.options,
+        }
+    }
+
     fn combine<Req>(&self, req: Req) -> OptCombiner<Req>
     where
         Req: ApiRequest,
@@ -137,6 +147,13 @@ impl<Back: Backend + Send + Sync> Backend for BackendWithGlobalOptions<Back> {
         T: Into<String>,
     {
         (self as BackendWithGlobalOptions<Back>).with_bearer_token(token)
+    }
+
+    fn with_path<P>(self, path: P) -> Self
+    where
+        P: Into<std::path::PathBuf>,
+    {
+        (self as BackendWithGlobalOptions<Back>).with_path(path)
     }
 
     fn build_base_request<Req>(
@@ -206,6 +223,13 @@ impl<Back: Backend> Backend for BackendWithGlobalOptions<Back> {
         T: Into<String>,
     {
         (self as BackendWithGlobalOptions<Back>).with_bearer_token(token)
+    }
+
+    fn with_path<P>(self, path: P) -> Self
+    where
+        P: Into<std::path::PathBuf>,
+    {
+        (self as BackendWithGlobalOptions<Back>).with_path(path)
     }
 
     fn build_base_request<Req>(

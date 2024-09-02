@@ -5,6 +5,7 @@
 // http://opensource.org/licenses/MIT>, at your option. This file may not be
 // copied, modified, or distributed except according to those terms.
 //
+use std::path::PathBuf;
 
 use crate::{
     header::{TRAILER, X_STREAM_ERROR_KEY},
@@ -247,4 +248,9 @@ pub trait Backend {
     fn with_bearer_token<T>(self, token: T) -> Self
     where
         T: Into<String>;
+
+    /// Set the path 
+    fn with_path<P>(self, path: P) -> Self
+    where
+        P: Into<PathBuf>;
 }
