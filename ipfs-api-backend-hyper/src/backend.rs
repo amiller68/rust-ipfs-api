@@ -202,13 +202,14 @@ where
     where
         Req: ApiRequest,
     {
-        let url = req.absolute_url(&self.base)?;
-        println!("base url: {:?}", url);
-        // append path to url if it exists
+        // Append path to base url
+        let mut base = self.base.clone();
         if let Some(path) = self.path() {
-            let path = format!("{}/{}", url.to_string(), path);
-            println!("path: {:?}", path);
+            let path = format!("{}/{}", base.to_string(), path);
+            base = path.parse::<Uri>().unwrap();
         }
+        let url = req.absolute_url(&base)?;
+        println!("base url: {:?}", url);
 
         let builder = http::Request::builder();
         let builder = builder.method(Req::METHOD).uri(url);
