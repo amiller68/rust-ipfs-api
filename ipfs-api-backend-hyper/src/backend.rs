@@ -209,7 +209,6 @@ where
             base = path.parse::<Uri>().unwrap();
         }
         let url = req.absolute_url(&base)?;
-        println!("base url: {:?}", url);
 
         let builder = http::Request::builder();
         let builder = builder.method(Req::METHOD).uri(url);
